@@ -4,6 +4,7 @@ Isaac Toombes, 48027782\
 Semester 2 2025 
 
 ## Requirements 
+
 ### Python & CUDA versions 
  - Python 3.13.9
  - CUDA 13.0
