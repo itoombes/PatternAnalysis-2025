@@ -3,10 +3,9 @@ COMP3710 Project\
 Isaac Toombes, 48027782\
 Semester 2 2025 
 
-## GFNet
+## Global Filter Networks
 
-### Reference
-Y. Rao, W. Zhau, Z. Zhu, J. Zhou, and J. Lu, "Global Filter Networks for Image Classification," 2021, arXiV: 2107.00645. [Online] [https://arxiv.org/abs/2107.00645](https://arxiv.org/abs/2107.00645)
+Global filter network
 
 ## Pre-processing
 Each image in the ADNI dataset individually contains a large proportion of blank space around the area of interest, indicating that cropping may be useful.
@@ -50,4 +49,5 @@ However, by combining the images together (taking the maximum value across every
 
 A `pip`-readable list is in the [`requirements.txt`](./requirements.txt) file.
 
-## References
+### References
+[1] Y. Rao, W. Zhau, Z. Zhu, J. Zhou, and J. Lu, "Global Filter Networks for Image Classification," 2021, arXiV: 2107.00645. [Online] [https://arxiv.org/abs/2107.00645](https://arxiv.org/abs/2107.00645)

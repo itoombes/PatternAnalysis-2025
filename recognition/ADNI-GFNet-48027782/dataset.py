@@ -10,58 +10,67 @@ import matplotlib.pyplot as plt
 # Regular expression to match the ADNI file name format
 ADNI_PATTERN = re.compile(r"\d+_\d+.jpeg")
 
-def get_patient_ids(directory: str) -> set: 
+def load_directory(directory) -> np.ndarray:
     '''
-    Returns the unique patient ids within the specified folder of the ADNI
-    dataset.
-
-    Assumes files are in the format "<patient id>_<image number>.png"
+    Load every image within the provided directory into a
+    <n_images>x240x256 numpy array
 
     directory: Path to directory of relevant images 
     '''
-    ids = set()
+    data = list()
 
     if os.path.isdir(directory):
-        # Iterate over every file in directory
+        # Iterate over every valid file in directory
         for file in os.listdir(directory):
-            # Add the patient ID of any valid image to the set
             if ADNI_PATTERN.match(file):
-                ids.add(file.split('_')[0])
-
-    return ids 
-
-def load_image(path: str) -> np.ndarray | None:
-    """
-    Load an image into a 2d tensor. Returns None if invalid path.
+                # Get patient ID from file name
+                key = int(file.split('_')[0])
+                # Read image, and convert into numpy array
+                im = np.asarray(Image.open(directory+file))
     
-    path: image to load
-    """
-    if (os.path.exists(path)):
-        im = Image.open(path)
-        return np.asarray(im)
+                data.append(im)
+
+    # Convert to numpy array and return
+    return np.stack(data)
+
+def load_directory_by_id(directory) -> dict[int, np.ndarray]:
+    '''
+    Load every image within the provided directory into a dictionary of numpy
+    arrays, keyed with patient IDs. Each of these arrays is in the format
+    <n_patient_images>x240x256
+
+    directory: Path to directory of relevant images 
+    '''
+    id_grouped_data = dict()
+
+    if os.path.isdir(directory):
+        # Iterate over every valid file in directory
+        for file in os.listdir(directory):
+            if ADNI_PATTERN.match(file):
+                # Get patient ID from file name
+                key = int(file.split('_')[0])
+                # Read image, and convert into numpy array
+                im = np.asarray(Image.open(directory+file))
+
+                # If patient ID already encountered, add to list of images
+                # Else, create that list
+                if key in id_grouped_data:
+                    id_grouped_data[key].append(im)
+                else:
+                    id_grouped_data[key] = list()
+                    id_grouped_data[key].append(im)
+    
+    # Convert lists of images to numpy arrays
+    for key in id_grouped_data:
+        id_grouped_data[key] = np.stack(id_grouped_data[key])
+
+    return id_grouped_data 
+
 
 if __name__ == "__main__":
     ADNI_PATH = 'C:/Users/itoom/COMP3710/ADNI/'
     TEST_PATH = ADNI_PATH+'AD_NC/test/'
     TRAIN_PATH = ADNI_PATH+'AD_NC/train/'
 
-    # 30520 240 x 256 images
-    images = np.zeros((30520, 240, 256)) 
-    i = 0
-
-    for path in (TEST_PATH+'AD/', TEST_PATH+'NC/', TRAIN_PATH+'AD/', TRAIN_PATH+'NC/'):
-        for i, file in enumerate(os.listdir(path)):
-            im = load_image(path+file)
-            if im is not None:
-                images[i] = im
-                i += 1
-
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(device)
-    images = torch.from_numpy(images)
-    images.to(device)
-    print("Determining maximum...")
-    image_max = torch.max(images, dim=0).values
-
-    plt.imshow(image_max.cpu().numpy(), cmap='gray')
-    plt.show()
+    print(load_directory(TEST_PATH+'AD/'))
+    print(load_directory_by_id(TEST_PATH+'AD/').keys())
