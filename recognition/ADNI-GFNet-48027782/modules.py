@@ -13,7 +13,6 @@ Github:  https://github.com/raoyongming/GFNet
 '''
 
 
-# Taken from GFNet Github page
 class GlobalFilter(nn.Module):
     '''
     Filter layer for GFNet
@@ -35,3 +34,7 @@ class GlobalFilter(nn.Module):
         x = x * weight
         x = irfft2(x, s=(H, W), dim=(1, 2), norm='ortho')
         return x
+    
+class MultiLayerPerceptron(nn.Module):
+    def __init__(self, in_features, hidden_features=None, out_features=None):
+        pass
