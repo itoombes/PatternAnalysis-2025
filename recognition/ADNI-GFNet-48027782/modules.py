@@ -84,7 +84,44 @@ class MultiLayerPerceptron(nn.Module):
         x = self.drop(x)
         return x
 
-class PatchEmbed():
+class GFNetBlock(nn.ModuleDict):
+    '''
+    Main processing block of GFNet
+    Normalise --> global filter --> normalise --> MLP
+    '''
+    def __init__(self, dim, mlp_ratio=4., drop=0., drop_path=0., 
+            act_layer=nn.GELU, norm_layer=nn.LayerNorm, h=14, w=8):
+        '''
+        dim: Input dimension
+        mlp_ratio: Size of MLP output compared to input dimension
+        drop: Dropout amount for MLP
+        drop_path: Dropout amount for TIMM DropPath 
+        act_layer: Activation layer for MLP
+        norm_layer: Normalisation layer used before and after filter
+        h: h parameter passed to MLP 
+        w: w parameter passed to MLP
+        '''
+        super().__init__()
+        self.norm1 = norm_layer(dim)
+        self.filter = GlobalFilter(dim, h=h, w=w)
+        self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        self.norm2 = norm_layer(dim)
+        mlp_hidden_dim = int(dim * mlp_ratio)
+        self.mlp = MultiLayerPerceptron(in_features=dim,
+                hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
+    
+    def forward(self, x):
+        y = self.norm1(x)
+        y = self.filter(x)
+        y = self.norm2(x)
+        y = self.mlp(x)
+        # Drop-path is a dropout variant which removes paths, not just
+        # individual nodes
+        y = self.drop_path(x)
+
+        return x + y
+
+class PatchEmbed(nn.Module):
     '''
     Image to patch embedding
     
