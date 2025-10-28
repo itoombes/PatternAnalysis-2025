@@ -49,7 +49,7 @@ class Adni():
         # Load into dataset and return
         return TensorDataset(images, output)
     
-    def get_training_and_validation_data(self):
+    def get_training_and_validation_data(self) -> tuple[TensorDataset, TensorDataset]:
         '''
         Loads the training dataset, and segments it into a training and
         validation set. Returns in order (training, validation). 
@@ -70,14 +70,14 @@ class Adni():
         # Create validation groups
         validation_control = list()
         for pid in validation_control_ids:
-            # Get the patient data and remove it from the existing set
+            # Get the patient data and remove it from the dictionary
             new_data = control.pop(pid)
             # Convert to tensor and append
             validation_control.append(torch.from_numpy(new_data))
 
         validation_present = list()
         for pid in validation_present_ids:
-            # Get teh data and remove it from the existing set
+            # Get the patient data and remove it from the dictionary
             new_data = present.pop(pid)
             # Convert to tensor and append
             validation_present.append(torch.from_numpy(new_data))
@@ -91,11 +91,27 @@ class Adni():
         validation_images = torch.cat((validation_control, validation_present))
         validation_out = torch.cat((validation_control_out, validation_present_out))
 
-        print(validation_images.shape)
-        print(validation_out.shape)
         validation = TensorDataset(validation_images, validation_out)
 
+        # Convert the remaining data in the dictionaries into combined tensors
+        training_control = list()
+        training_present = list()
+        for v in control.values():
+            training_control.append(torch.from_numpy(v))
+        for v in present.values():
+            training_present.append(torch.from_numpy(v))
+        training_control = torch.cat(training_control)
+        training_present = torch.cat(training_present)
 
+        # Convert into TensorDataset
+        training_control_out = torch.zeros(training_control.shape[0])
+        training_present_out = torch.ones(training_present.shape[0])
+        
+        training_images = torch.cat((training_control, training_present))
+        training_out = torch.cat((training_control_out, training_present_out))
+        training = TensorDataset(training_images, training_out)
+
+        return (training, validation)
 
 def load_directory(directory: str) -> np.ndarray:
     '''
@@ -152,8 +168,3 @@ def load_directory_by_id(directory: str) -> dict[int, np.ndarray]:
         id_grouped_data[key] = np.stack(id_grouped_data[key])
 
     return id_grouped_data 
-
-
-if __name__ == "__main__":
-    adni = Adni('C:/Users/itoom/COMP3710/ADNI/')
-    adni.get_training_and_validation_data()
