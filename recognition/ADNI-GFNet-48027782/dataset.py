@@ -2,7 +2,7 @@ from PIL import Image
 import os
 import numpy as np
 import torch
-from torch.utils.data import TensorDataset
+from torch.utils.data import TensorDataset, DataLoader
 import re
 import random
 
@@ -28,7 +28,7 @@ class Adni():
         # Ensure validation split is in range. Otherwise, choose 0.2
         if not (validation_split > 0 and validation_split < 1):
             self.validation_split = 0.2
-    
+        
     def get_test_data(self) -> TensorDataset:
         '''
         Load the training dataset
@@ -112,6 +112,36 @@ class Adni():
         training = TensorDataset(training_images, training_out)
 
         return (training, validation)
+    
+    def get_testing_dataloader(self, **kwargs) -> DataLoader:
+        '''
+        Return dataloader for testing set.
+
+        **kwargs: Arguments passed to DataLoader constructor
+        '''
+        testset = self.get_test_data()
+        return DataLoader(testset, **kwargs)
+    
+    def get_training_and_validation_dataloaders(self, training_batch_size: int,
+            validate_batch_size: int, shuffle: bool = True,
+            **kwargs) -> tuple[DataLoader, DataLoader]:
+        '''
+        Returns DataLoaders for training and validation set, in that order.
+        
+        training_batch_size: Batch size of training data
+        validate_batch_size: Batch size of validation data
+        shuffle: Whether to shuffle the datasets
+        **kwargs: Keyword arguments to pass to constructors
+        '''
+
+        trainset, validateset = self.get_training_and_validation_data()
+        train_loader = DataLoader(trainset, batch_size=training_batch_size,
+                shuffle=shuffle, **kwargs)
+
+        validate_loader = DataLoader(validateset,
+                batch_size=validate_batch_size, shuffle=shuffle, **kwargs)
+
+        return (train_loader, validate_loader) 
 
 def load_directory(directory: str) -> np.ndarray:
     '''
