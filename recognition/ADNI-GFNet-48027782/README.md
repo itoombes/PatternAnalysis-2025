@@ -5,7 +5,14 @@ Semester 2 2025
 
 ## Global Filter Networks
 
-Global filter network
+Global filter networks function by replacing the self-attention layer in vision transformers with Fourier transforms[1].
+An example overview this layout is as follows [1]:
+
+![Layout of GFNet](figures/GFNet_layout.png)
+
+In essence, the model works by replacing the self-attention layer with a Fourier transform, learning filters for the transform-space, and then perfoming an inverse Fourier transform to return the data to its original domain [1].
+This data is then fed through a multi-layer perceptron.
+
 
 ## Pre-processing
 Each image in the ADNI dataset individually contains a large proportion of blank space around the area of interest, indicating that cropping may be useful.

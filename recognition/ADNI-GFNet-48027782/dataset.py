@@ -3,9 +3,8 @@ import os
 import numpy as np
 import pandas as pd
 import torch
+from torch.utils.data import TensorDataset
 import re
-
-import matplotlib.pyplot as plt
 
 # Regular expression to match the ADNI file name format
 ADNI_PATTERN = re.compile(r"\d+_\d+.jpeg")
