@@ -19,15 +19,15 @@ N_EPOCHS = 30
 # Interval between evaluations
 EVAL_INT = 3
 
-# Model hyperparameters
+# Model hyperparameters -- based on GFNet Ti
 # Embedded dimension
-EMBEDDED_DIM = 384
+EMBEDDED_DIM = 256 
 # Ratio of embedded dimension to multi-layer perceptron
 MLP_RATIO = 4
 # Number of model blocks
-DEPTH = 19
+DEPTH = 12
 # Path dropout rate; increases by this increment after each block
-DROP_PATH_RATE = 0.15
+DROP_PATH_RATE = 0.01
 
 
 def train_model():
