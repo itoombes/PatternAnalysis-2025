@@ -94,6 +94,19 @@ To avoid contamination of data, the following process was used:
 ## File structure
 
 ### dataset.py
+Contains an `Adni()` class, initalised with a filepath to the ADNI dataset, with the following key methods:
+ - `__init__(base_directory, validation_split, validation_split_base)`:
+    - `base_directory` specifies the location of the ADNI dataset. On Rangpur, this is `/home/groups/comp3710/data/ADNI`.
+    - `validation_split`, which specifies the proportion of `train` data to use for a validation set
+    - `validation_split_base`, which is used as a randomness seed to ensure reproducability.
+ - `get_test_dataloader()`, which returns a `torch.DataLoader()` of the ADNI 'test' data.
+ - `get_validation_and_training_dataloaders()`, which returns `torch.DataLoader()`s containing the ADNI 'train' data, split according to `validation_split`.
+
+There are other helper methods within the file, such as:
+ - `Adni.get_test_data()` & `Adni.get_training_and_validation_data()`, which return `torch.TensorDataset()`s instead of `torch.DataLoader()`.
+ - `load_image()`, which uses PIL and NumPy to load an image into a \<channel\> × \<width\> × \<height\> array.
+ - `load_directory()`, which loads every image in a directory into a NumPy array.
+ - `load_directory_by_id()`, which creates a `dict()` linking every patient ID within a directory to their respective images, loaded in a NumPy array. Used for splitting the 'train' data into training and validation datasets.
 
 ### modules.py
 Contains `torch.nn.Module()` subclasses adapted from the original GFNet GitHub page [2], namely:
