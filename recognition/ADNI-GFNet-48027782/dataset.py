@@ -22,7 +22,7 @@ CONTROL_PATH = 'NC/'
 PRESENT_PATH = 'AD/'
 
 def split_validation_and_training(folder: str, seed: int | None = None,
-                                  split_amount: float = 0.2) -> tuple[dict, dict]:
+                                  validation_split: float = 0.2) -> tuple[dict, dict]:
     '''
     Separate the filenames based by patient ID into a dict.
     Then randomly separates this dict into validation and training dicts.
@@ -50,7 +50,7 @@ def split_validation_and_training(folder: str, seed: int | None = None,
     
     # Randomly select a proportion of pid's to use for validation set
     validation_ids = random.sample(list(training_map.keys()),
-                                   int(len(training_map) * split_amount))
+                                   int(len(training_map) * validation_split))
     
     # Remove pid entries from training_map and place into validation_map
     validation_map = dict()
@@ -134,9 +134,48 @@ def get_test_dataloader(adni_root: str, **kwargs) -> DataLoader:
     dataset = get_test_dataset(adni_root, transform=TRANSFORM)
     return DataLoader(dataset, **kwargs)
 
-        
+def get_validation_and_training_datasets(adni_root: str,
+            validation_split: float = 0.2, transform: v2.Transform | None = None,
+            seed: int | None = None) -> tuple[Dataset, Dataset]:
+    '''
+    Read the training folder, separate it into a validation and test dataset.
+
+    adni_root: Filepath to ADNI dataset
+    validation_split: Proportion of dataset to put in validation dataset
+    transform: Image transform to be applied to each image
+    seed: Seed to initialise random.seed() for reproducibility
+    '''
+    train_root = adni_root + TRAIN_PATH
+    cn_root = train_root + CONTROL_PATH
+    ad_root = train_root + PRESENT_PATH
+
+    # Read the dataset files and split into testing & validation sets
+    validation_cn, training_cn = split_validation_and_training(cn_root, 
+        seed = seed, validation_split = validation_split)
+    validation_ad, training_ad = split_validation_and_training(ad_root, 
+        seed = seed, validation_split = validation_split)
+    # Convert into lists of lists of file names
+    validation_cn = list(validation_cn.values())
+    validation_ad = list(validation_ad.values())
+    training_cn = list(training_cn.values())
+    training_ad = list(training_ad.values())
+    # Flatten
+    validation_cn = [c for r in validation_cn for c in r]
+    validation_ad = [c for r in validation_ad for c in r]
+    training_cn = [c for r in training_cn for c in r]
+    training_ad = [c for r in training_ad for c in r]
+
+    # Convert into datasets & return
+    validation_set = ImageDataset(train_root, validation_cn, validation_ad,
+                              transform=transform)
+    training_set = ImageDataset(train_root, training_cn, training_ad,
+                              transform=transform)
+    return (validation_set, training_set)
+
 if __name__ == "__main__":
 
-    testloader = get_test_dataloader(ADNI_ROOT, shuffle=True, batch_size = 10)
-    for t in testloader:
+    validation_set, training_set = get_validation_and_training_datasets(ADNI_ROOT)
+    for t in validation_set:
+        print(f'{t[0].shape} ---- {t[1]}')
+    for t in training_set:
         print(f'{t[0].shape} ---- {t[1]}')
