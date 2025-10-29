@@ -8,14 +8,15 @@ import random
 
 # Regular expression to match the ADNI file name format
 ADNI_PATTERN = re.compile(r"\d+_\d+.jpeg")
-# Locations of 
+# Pathways to relevant subfolders within ADNI folder
 TEST_PATH = 'AD_NC/test/'
 TRAIN_PATH = 'AD_NC/train/'
 CONTROL_PATH = 'NC/'
 PRESENT_PATH = 'AD/'
 
 class Adni():
-    def __init__(self, base_directory: str, validation_split: float = 0.2, validation_split_base: int | None = None):
+    def __init__(self, base_directory: str, validation_split: float = 0.2,
+                 validation_split_base: int | None = None):
         '''
         base_directory: Location of ADNI folder
         validation_split: Amount of dataset to be split (rounds up)
@@ -113,7 +114,7 @@ class Adni():
 
         return (training, validation)
     
-    def get_testing_dataloader(self, **kwargs) -> DataLoader:
+    def get_test_dataloader(self, **kwargs) -> DataLoader:
         '''
         Return dataloader for testing set.
 
@@ -143,6 +144,16 @@ class Adni():
 
         return (train_loader, validate_loader) 
 
+def load_image(filepath: str) -> np.ndarray:
+    '''
+    Load an image and return in a numpy format which is compatible with torch.
+    (i.e., channels x height x width)
+
+    filepath: Path to image
+    '''
+    im = np.asarray(Image.open(filepath))[np.newaxis, :, :]
+    return im
+
 def load_directory(directory: str) -> np.ndarray:
     '''
     Load every image within the provided directory into a
@@ -158,8 +169,8 @@ def load_directory(directory: str) -> np.ndarray:
             if ADNI_PATTERN.match(file):
                 # Get patient ID from file name
                 key = int(file.split('_')[0])
-                # Read image, and convert into numpy array
-                im = np.asarray(Image.open(directory+file))
+                # Read image
+                im = load_image(directory+file)
 
                 data.append(im)
 
@@ -183,7 +194,7 @@ def load_directory_by_id(directory: str) -> dict[int, np.ndarray]:
                 # Get patient ID from file name
                 key = int(file.split('_')[0])
                 # Read image, and convert into numpy array
-                im = np.asarray(Image.open(directory+file))
+                im = load_image(directory+file)
 
                 # If patient ID already encountered, add to list of images
                 # Else, create that list
