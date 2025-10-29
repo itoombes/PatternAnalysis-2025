@@ -2,8 +2,9 @@ from PIL import Image
 import os
 import numpy as np
 import torch
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms.v2 as v2
+from torchvision.io.image import decode_image
 import random
 
 TEST_IMAGE = 'C:/Users/itoom/COMP3710/ADNI/AD_NC/test/AD/388206_78.jpeg'
@@ -53,6 +54,52 @@ def split_validation_and_training(folder: str, seed: int | None = None,
 
     return (validation_map, training_map)
 
+class ImageDataset(Dataset):
+    def __init__(self, root: str, cn_files: list, ad_files: list,
+                 transform: v2.Transform | None = None):
+        '''
+        root: Folder containing the 'AD' and 'CN' subfolders
+        cn_files: Files in the 'Cognitive Normal' category
+        ad_files: Files in the 'Alzheimer's Detected' category
+        transform: torchvision transform to apply to image
+        '''
+        self.root = root
+        self.cn_files = cn_files
+        self.ad_files = ad_files
+        self.transform = transform
+    
+    def __len__(self) -> int:
+        '''
+        Treats ad_files and cn_files as though they are a combined list
+        '''
+        return len(self.cn_files) + len(self.ad_files)
+
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, int]:
+        '''
+        Retrieve image & label from dataset
+        Treats the file names as though they are a combined list, beginning with
+        cn_files.
+        '''
+        label = None
+        filepath = self.root
+        # Extract label and full filepath
+        if (idx >= len(self.cn_files)):
+            # Using the ad_files list
+            label = 1
+            # Index is offset by the length of cn_files
+            filename = self.ad_files[idx - len(self.cn_files)] 
+            filepath += PRESENT_PATH + filename 
+        else:
+            # Using the cn_files list
+            label = 0
+            filepath += CONTROL_PATH + self.cn_files[idx]
+        
+        image = decode_image(filepath)
+        if self.transform:
+            image = self.transform(image)
+        
+        return image, label
+        
 if __name__ == "__main__":
     validation, training = split_validation_and_training(ADNI_ROOT+TEST_PATH+CONTROL_PATH)
     print(validation.keys())
