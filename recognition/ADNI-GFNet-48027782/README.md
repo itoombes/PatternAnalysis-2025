@@ -77,12 +77,16 @@ A `pip`-readable list is in the [`requirements.txt`](./requirements.txt) file.
 - typing_extensions 4.15.0
 - tzdata            2025.2
 ## Data Pre-processing
+For compatability with PyTorch modules, each image was converted from the standard unsigned 8-bit representation to a scaled `torch.float32` datatype (all values within the range 0-1).
+This decision was made in accordance with the PyTorch API.
+
 Each image in the ADNI dataset individually contains a large proportion of blank space around the area of interest, indicating that cropping may be useful.
 However, by combining the images together (taking the maximum value across every image for every pixel), it becomes apparent that the data is spread in such a way to make this infeasible:
 
 ![Visualisation of image space used by ADNI data](figures/adni_imgspaceused.png)
 
-It was decided against processing the 8-bit values in the images (for example, by dividing them by 255 to change them to the range of 0 and 1), because of the use of discrete Fourier transforms.
+Instead, the blank spaces, variable size of scans, and positions within the image will be kept.
+This should hopefully improve the model's generalisation, as the areas of interest in the model will change with every iteration.
 
 ## Creation of a validation data set
 It was decided to select a subset of the training set to create a validation dataset, and provide an indication of the model's performance over training iterations.

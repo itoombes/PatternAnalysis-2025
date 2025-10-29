@@ -7,8 +7,13 @@ import torchvision.transforms.v2 as v2
 from torchvision.io.image import decode_image
 import random
 
-TEST_IMAGE = 'C:/Users/itoom/COMP3710/ADNI/AD_NC/test/AD/388206_78.jpeg'
+# TODO : Temporary, used for testing
 ADNI_ROOT = 'C:/Users/itoom/COMP3710/ADNI/'
+
+# Pre-processing transforms used on the data
+TRANSFORM = v2.Compose([
+    v2.ToDtype(torch.float32, scale=True), # Force datatype compatibility
+])
 
 # Pathways to relevant subfolders within ADNI folder
 TEST_PATH = 'AD_NC/test/'
@@ -117,8 +122,21 @@ def get_test_dataset(adni_root: str,
 
     # Initialise and return the dataset
     return ImageDataset(test_root, cn_files, ad_files, transform=transform)
+
+def get_test_dataloader(adni_root: str, **kwargs) -> DataLoader:
+    '''
+    Create a dataloader containing the test data.
+
+    adni_root: Filepath to ADNI dataset
+    **kwargs: Keyword arguments passed to dataloader
+    '''
+    # Load the test dataset with default transform
+    dataset = get_test_dataset(adni_root, transform=TRANSFORM)
+    return DataLoader(dataset, **kwargs)
+
         
 if __name__ == "__main__":
-    validation, training = split_validation_and_training(ADNI_ROOT+TEST_PATH+CONTROL_PATH)
-    print(validation.keys())
-    print(training.keys())
+
+    testloader = get_test_dataloader(ADNI_ROOT, shuffle=True, batch_size = 10)
+    for t in testloader:
+        print(f'{t[0].shape} ---- {t[1]}')
