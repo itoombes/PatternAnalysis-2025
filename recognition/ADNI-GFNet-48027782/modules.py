@@ -1,8 +1,10 @@
 import torch
-from torch import tensor
 from torch.fft import rfft2, irfft2
 import torch.nn as nn
 from timm.layers.drop import DropPath
+from timm.layers.helpers import to_2tuple
+from torch.nn.init import trunc_normal_
+from functools import partial
 import math
 
 '''
@@ -138,15 +140,8 @@ class PatchEmbed(nn.Module):
         super().__init__()
 
         # Ensure img_size and patch_size are 2D tuples
-        if type(img_size) is int:
-            self.img_size = (img_size, img_size)
-        else:
-            self.img_size = img_size
-        
-        if type(patch_size) is int:
-            self.patch_size = (patch_size, patch_size)
-        else:
-            self.patch_size = patch_size
+        self.img_size = to_2tuple(img_size)
+        self.patch_size = to_2tuple(patch_size)
         
         # Determine number of patches based on image and patch size
         self.num_patches = ((self.img_size[0] // self.patch_size[0])
@@ -169,10 +164,73 @@ class PatchEmbed(nn.Module):
 
 class GFNet(nn.Module):
     '''
-    Modified version of GFNet
+    Lightly modified version of GFNet from GFNet GitHub 
+    Note that representation size & uniform_drop have been removed from this
+    version
     '''
     def __init__(self, img_size=(240, 256), patch_size=(16, 16), in_chans=1,
-                 num_classes=2, embed_dim=768, depth=12, mlp_ratio=4.,
-                 representation_size=None, uniform_drop=False, drop_rate=0.,
-                 drop_path_rate=0., norm_layer=None, dropcls=0):
-        pass 
+                 num_classes=2, embedded_dim=768, depth=12, mlp_ratio=4.,
+                 drop_rate=0, drop_path_rate=0., norm_layer=None):
+        super().__init__()
+        
+        self.num_classes = num_classes
+        self.embedded_dim = embedded_dim
+        # Normalisation layer defaults 1e-6 added to denominator for stabliity
+        if norm_layer is None:
+            norm_layer = partial(nn.LayerNorm, eps=1e-6)
+        else:
+            norm_layer = norm_layer
+        
+        # Patch embedding layer
+        self.patch_embedd = PatchEmbed(img_size = img_size,
+                patch_size = patch_size, in_chans = 1,
+                embedded_dim = embedded_dim)
+        
+        # Position embedding parameters
+        self.pos_embed = nn.Parameter(torch.zeros(1,
+                self.patch_embedd.num_patches, embedded_dim))
+        self.pos_drop = nn.Dropout(p=drop_rate)
+
+        h = img_size[0] // patch_size[0]
+        w = img_size[1] // patch_size[1]
+
+        # Not using uniform drop
+        # Drop rate increases with depth
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]
+
+        self.blocks = nn.ModuleList([
+            GFNetBlock(
+                dim=embedded_dim, mlp_ratio=mlp_ratio, drop=drop_rate,
+                drop_path=dpr[i], norm_layer=norm_layer, h=h, w=w
+            ) for i in range(depth)])
+        
+        self.norm = norm_layer(embedded_dim)
+
+        # Hold-over from representation_size from original version
+        self.pre_logits = nn.Identity()
+
+        # Classifier head - coverts embedded dimension to prediction
+        self.head = nn.Linear(self.embedded_dim, num_classes)
+
+        # Holdover from dropcls parameter
+        self.final_dropout = nn.Identity()
+
+        # Initialise embedded position init via truncated normal distribution
+        # Original GFNet used TIMM preview version; now just a part of PyTorch
+        trunc_normal_(self.pos_embed, std=0.2)
+
+        # Initialise the linear & layernorm weights
+        self.apply(self._init_weights)
+    
+    def _init_weights(self, m):
+        '''
+        Initialise linear weights to truncated normal distribution, or their bias
+        Initialise layer norms to have 0 bias and weight of 1
+        '''
+        if isinstance(m, nn.Linear):
+            trunc_normal_(m.weight, std=.02)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
