@@ -172,10 +172,41 @@ def get_validation_and_training_datasets(adni_root: str,
                               transform=transform)
     return (validation_set, training_set)
 
+def get_validation_and_training_dataloaders(adni_root: str,
+        training_batch_size: int, validation_batch_size: int,
+        validation_split: float = 0.2, shuffle_training: bool = True,
+        shuffle_validation: bool = False,
+        seed: int | None = None) -> tuple[DataLoader, DataLoader]:
+    '''
+    Create dataloaders containing the training data, separated into training
+    and validation sets. Returns in order (validation, training).
+
+    adni_root: Filepath to ADNI dataset
+    training_batch_size: Batch size of training data loader
+    validation_batch_size: Batch size of validation data loader
+    validation_split: Proportion of ADNI training dataset to use for validation
+    shuffle_training: Whether to shuffle the training loader
+    shuffle_validation: Whether to shuffle the validation loader
+    seed: Seed passed to random.seed(), for reproducibility
+    '''
+    validation_set, training_set = get_validation_and_training_datasets(
+        adni_root, validation_split=validation_split, transform=TRANSFORM,
+        seed = seed)
+    
+    validation = DataLoader(validation_set, batch_size = validation_batch_size,
+                            shuffle = shuffle_validation)
+    training = DataLoader(training_set, batch_size = training_batch_size,
+                          shuffle = shuffle_training)
+    
+    return (validation, training)
+
+
 if __name__ == "__main__":
 
-    validation_set, training_set = get_validation_and_training_datasets(ADNI_ROOT)
-    for t in validation_set:
-        print(f'{t[0].shape} ---- {t[1]}')
-    for t in training_set:
-        print(f'{t[0].shape} ---- {t[1]}')
+    validation, training = get_validation_and_training_dataloaders(ADNI_ROOT, 100, 100)
+
+    for b in validation:
+        print(f'{b[0].shape} ---- {b[1]}')
+
+    for b in training:
+        print(f'{b[0].shape} ---- {b[1]}')
