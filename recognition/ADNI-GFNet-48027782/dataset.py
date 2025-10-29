@@ -99,6 +99,24 @@ class ImageDataset(Dataset):
             image = self.transform(image)
         
         return image, label
+
+def get_test_dataset(adni_root: str,
+                     transform: v2.Transform | None = None) -> ImageDataset:
+    '''
+    Load the dataset containing the test data
+
+    adni_root: Filepath to ADNI dataset
+    transform: Image transform to be applied to each image
+    '''
+    # Location within ADNI where test data is stored
+    test_root = adni_root + TEST_PATH
+    
+    # Get file names within each subfolder
+    cn_files = os.listdir(test_root + CONTROL_PATH)
+    ad_files = os.listdir(test_root + PRESENT_PATH) 
+
+    # Initialise and return the dataset
+    return ImageDataset(test_root, cn_files, ad_files, transform=transform)
         
 if __name__ == "__main__":
     validation, training = split_validation_and_training(ADNI_ROOT+TEST_PATH+CONTROL_PATH)
