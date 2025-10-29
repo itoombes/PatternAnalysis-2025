@@ -144,8 +144,8 @@ class PatchEmbed(nn.Module):
         self.patch_size = to_2tuple(patch_size)
         
         # Determine number of patches based on image and patch size
-        self.num_patches = ((self.img_size[0] // self.patch_size[0])
-                * (self.img_size[1] * self.img_size[1]))
+        self.num_patches = ((int(self.img_size[0]) // int(self.patch_size[0]))
+                * (int(self.img_size[1]) * int(self.img_size[1])))
         
         # Conv. layer used to extract patches & project onto embedded dimension
         self.proj = nn.Conv2d(in_chans, embedded_dim, kernel_size=patch_size, stride=patch_size)
