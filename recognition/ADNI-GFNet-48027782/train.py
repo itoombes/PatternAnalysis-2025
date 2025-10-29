@@ -5,8 +5,6 @@ from modules import GFNet
 import time
 import pickle
 
-# FILE LOCATIONS
-
 # Root of ADNI data
 ADNI_ROOT = 'C:/Users/itoom/COMP3710/ADNI/'
 # Location to save validation data & model parameters
@@ -17,7 +15,7 @@ MODEL_SAVE_NAME = 'gfnet_weights.pt2'
 STAT_SAVE_NAME = 'stats.pkl'
 
 # Number of training epochs
-N_EPOCHS = 300 
+N_EPOCHS = 30 
 # Interval between evaluations
 EVAL_INT = 3
 
@@ -33,6 +31,10 @@ DROP_PATH_RATE = 0.15
 
 
 def train_model():
+    # Use CUDA if available
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'Using device: {torch.cuda.get_device_name(device)}')
+
     # Load a GFNet model with the specified hyperparameters
     model = GFNet(
         img_size=(240, 256),
@@ -42,7 +44,7 @@ def train_model():
         depth=DEPTH,
         mlp_ratio=MLP_RATIO,
         drop_path_rate=DROP_PATH_RATE
-    )
+    ).to(device)
 
     # Using cross entropy as validation criterion
     criterion = nn.CrossEntropyLoss()
@@ -57,10 +59,34 @@ def train_model():
 
     optimiser = torch.optim.AdamW(params, eps=1e-8)
 
+    # Load training and validation datasets
+    adni = Adni(ADNI_ROOT, validation_split=0.15, validation_split_base=42)
+    train_loader, validate_loader = adni.get_training_and_validation_dataloaders(128, 128)
 
     # Train the model
     for e in range(N_EPOCHS):
-        pass
+        start_time = time.time()
+        model.train()
+        total_loss = 0
+
+        for batch_idx, (images, labels) in enumerate(train_loader):
+            images.to(device)
+            labels.to(device)
+
+            # Forward pass
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            total_loss = loss
+
+            optimiser.zero_grad()
+            loss.backward()
+            optimiser.step()
+
+        end_time = time.time()
+        avg_loss = total_loss / len(train_loader.dataset)
+
+        print(f'Epoch {e}: {end_time - start_time:.2f}, {avg_loss}')
+
 
 if __name__ == "__main__":
     train_model()

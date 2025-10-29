@@ -152,6 +152,10 @@ def load_image(filepath: str) -> np.ndarray:
     filepath: Path to image
     '''
     im = np.asarray(Image.open(filepath))[np.newaxis, :, :]
+    # Normalise image to float between [0, 1]
+    im = im / 255
+    # Add extra 'channel' axis
+    im = im[np.newaxis, :, :]
     return im
 
 def load_directory(directory: str) -> np.ndarray:
