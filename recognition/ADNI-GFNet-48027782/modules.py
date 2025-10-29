@@ -182,13 +182,13 @@ class GFNet(nn.Module):
             norm_layer = norm_layer
         
         # Patch embedding layer
-        self.patch_embedd = PatchEmbed(img_size = img_size,
-                patch_size = patch_size, in_chans = 1,
+        self.patch_embed = PatchEmbed(img_size = img_size,
+                patch_size = patch_size, in_chans = in_chans,
                 embedded_dim = embedded_dim)
         
         # Position embedding parameters
         self.pos_embed = nn.Parameter(torch.zeros(1,
-                self.patch_embedd.num_patches, embedded_dim))
+                self.patch_embed.num_patches, embedded_dim))
         self.pos_drop = nn.Dropout(p=drop_rate)
 
         h = img_size[0] // patch_size[0]
@@ -206,14 +206,8 @@ class GFNet(nn.Module):
         
         self.norm = norm_layer(embedded_dim)
 
-        # Hold-over from representation_size from original version
-        self.pre_logits = nn.Identity()
-
         # Classifier head - coverts embedded dimension to prediction
         self.head = nn.Linear(self.embedded_dim, num_classes)
-
-        # Holdover from dropcls parameter
-        self.final_dropout = nn.Identity()
 
         # Initialise embedded position init via truncated normal distribution
         # Original GFNet used TIMM preview version; now just a part of PyTorch
@@ -234,3 +228,22 @@ class GFNet(nn.Module):
         elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
+    
+    def forward(self, x):
+        '''
+        Run forward pass on model features
+        '''
+        # Patch and position embedding, with specified dropout
+        x = self.patch_embed(x) + self.pos_embed
+        x = self.pos_drop(x)
+
+        # Run through GF/MLP blocks
+        for blk in self.blocks:
+            x = blk(x)
+
+        # Normalise & average pool
+        x = self.norm(x).mean(1)
+
+        # Run through classifier head and return
+        x = self.head(x)
+        return x
