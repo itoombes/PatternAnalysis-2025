@@ -7,9 +7,6 @@ import torchvision.transforms.v2 as v2
 from torchvision.io.image import decode_image
 import random
 
-# TODO : Temporary, used for testing
-ADNI_ROOT = 'C:/Users/itoom/COMP3710/ADNI/'
-
 # Pre-processing transforms used on the data
 TRANSFORM = v2.Compose([
     v2.ToDtype(torch.float32, scale=True), # Force datatype compatibility
@@ -199,14 +196,3 @@ def get_validation_and_training_dataloaders(adni_root: str,
                           shuffle = shuffle_training)
     
     return (validation, training)
-
-
-if __name__ == "__main__":
-
-    validation, training = get_validation_and_training_dataloaders(ADNI_ROOT, 100, 100)
-
-    for b in validation:
-        print(f'{b[0].shape} ---- {b[1]}')
-
-    for b in training:
-        print(f'{b[0].shape} ---- {b[1]}')
