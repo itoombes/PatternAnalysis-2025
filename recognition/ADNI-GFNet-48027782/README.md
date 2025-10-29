@@ -19,7 +19,9 @@ A visual overview of this architecture is as follows [2]:
 ![Layout of GFNet](figures/GFNet_layout.png)
 
 Note that in addition to the Global Filter and MLP blocks, there is a patch-embedding layer, several normalisation layers, an average pooling layer, and a linear layer.
-The patch-embedding layer works as it does in a vision transformer; it breaks the input image into distinct 'patches', before flattening and projecting them onto the embedding dimension.
+The patch-embedding layer works as it does in a vision transformer; it breaks the input image into distinct 'patches', before flattening and projecting them onto the embedding dimension [2].
+However, unlike in a vision transformer, there is no additional class token. 
+Implementations of these blocks are available in the GFNet GitHub repository [2].
 
 The purpose of this project is to adapt the GFNet architecture to classify observations in the ADNI dataset into either 'cognitive normal' or 'Alzheimer's detected' classes, with a desired minimum level of accuracy of $80\%$.
 
@@ -89,7 +91,27 @@ To avoid contamination of data, the following process was used:
  - 20% of the patient ID's in the `AD` dataset, and 20% of patient ID's in the `NC` dataset, were randomly selected
  - The observations associated with these ID`s were used to create the validation dataset, and removed from the training dataset
 
+## File structure
+
+### dataset.py
+
+### modules.py
+Contains `torch.nn.Module()` subclasses adapted from the original GFNet GitHub page [2], namely:
+ - `PatternEmbed()`, which segments an input image into a pattern and embeds it into a one-dimensional 'embedded' space
+ - `GlobalFilter()`, which takes an input, performs a discrete Fourier transform, multiplies it by a learnable weight, and then performs an inverse Fourier transform back to the original input size
+ - `MultiLayerPerceptron()`, which uses two fully connected layers with a Gaussian Error Linear Unit activation function
+ - `GFNetBlock()`, which stacks a `MultiLayerPerceptron()` module on a `GlobalFilter()` module, with layer normalisation between the modules.
+ - `GFNet()`, which is the actual GFNet implentation:
+    - Input is first fed through a `PatchEmbed()` module
+    - It is then position-embedded with a set of learnable parameters (`torch.nn.Parameter()`)
+    - The embedded space is then fed through $n$ `GFNetBlock()` modules
+    - The output from the last `GFNetBlock()` is then normalised and average-pooled (using `torch.nn.LayerNorm()` with `torch.mean()`)
+    - Finally, the output is run through a `torch.nn.Linear()` module, to get the final model classification
+### train.py
+
+### predict.py
+
 ## References
 [1] Alzheimer's Disease Neuroimaging Initiative, "ADNI | Alzheimer's disease neuroimaging initiative," 2025. [Online] [https://adni.loni.usc.edu/](https://adni.loni.usc.edu/)
 
-[2] Y. Rao, W. Zhau, Z. Zhu, J. Zhou, and J. Lu, "Global Filter Networks for Image Classification," 2021, arXiV: 2107.00645. [Online] [https://arxiv.org/abs/2107.00645](https://arxiv.org/abs/2107.00645)
+[2] Y. Rao, W. Zhao, Z. Zhu, J. Zhou, and J. Lu, "Global Filter Networks for Image Classification," 2021, arXiV: 2107.00645. [Online] [https://arxiv.org/abs/2107.00645](https://arxiv.org/abs/2107.00645)

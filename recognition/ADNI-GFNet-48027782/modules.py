@@ -6,13 +6,13 @@ from timm.layers.drop import DropPath
 import math
 
 '''
-Many of the classes within have essentially been transferred from GFNet.py,
+Many of the classes within have been transferred from gfnet.py,
 with some additional documentation.
 
-Y. Rao, W. Zhau, Z. Zhu, Z. Zhou, and J. Lu
+Y. Rao, W. Zhao, Z. Zhu, Z. Zhou, and J. Lu
 Global Filter Networks for Image Classification, 2021
 arXiv: https://arxiv.org/abs/2107.00645
-Github: https://github.com/raoyongming/GFNet
+GitHub: https://github.com/raoyongming/GFNet
 '''
 
 
@@ -166,3 +166,13 @@ class PatchEmbed(nn.Module):
         x = self.proj(x)
         # Flatten into embedded space
         x = self.proj(x).flatten(2).transpose(1, 2)
+
+class GFNet(nn.Module):
+    '''
+    Modified version of GFNet
+    '''
+    def __init__(self, img_size=(240, 256), patch_size=(16, 16), in_chans=1,
+                 num_classes=2, embed_dim=768, depth=12, mlp_ratio=4.,
+                 representation_size=None, uniform_drop=False, drop_rate=0.,
+                 drop_path_rate=0., norm_layer=None, dropcls=0):
+        pass 
