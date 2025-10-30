@@ -28,21 +28,19 @@ class GlobalFilter(nn.Module):
     def __init__(self, dim, h = 14, w = 8):
         super().__init__()
         # complex_weight is the learnable filter
-        self.complex_weight = nn.Parameter(torch.randn(h, w, dim, 2,
+        # For some reason, rfft2 converts w of 16 to 9, so changing here to match
+        self.complex_weight = nn.Parameter(torch.randn(h, w // 2 + 1, dim, 2,
                 dtype=torch.float32) * 0.02) 
+        
+        self.h = h
+        self.w = w
     
     def forward(self, x):
         # N is number of patches, C is embedded dimension
-        print(x.shape)
         batch_size, N, C = x.shape
         
-        # Manual fix to spatial_size
-        # Number of patches is 240, so standard GFNet method of splitting into
-        # a, b = int(math.sqrt(N)) breaks x.view(), as 15 * 15 < 240
-        a, b = 15, 16
-        
         # Change input shape & type to prepare for Fourier
-        x = x.view(batch_size, a, b, C)
+        x = x.view(batch_size, self.h, self.w, C)
         x = x.to(torch.float32)
 
         # Transform to frequency space
@@ -51,7 +49,7 @@ class GlobalFilter(nn.Module):
         weight = torch.view_as_complex(self.complex_weight)
         x = x * weight
         # Move back to original feature space
-        x = irfft2(x, s=(a, b), dim=(1, 2), norm='ortho')
+        x = irfft2(x, s=(self.h, self.w), dim=(1, 2), norm='ortho')
 
         # Return x back to original shape
         x = x.reshape(batch_size, N, C)
@@ -197,7 +195,7 @@ class GFNet(nn.Module):
         self.pos_drop = nn.Dropout(p=drop_rate)
 
         h = img_size[0] // patch_size[0]
-        w = h
+        w = img_size[1] // patch_size[1]
 
         # Not using uniform drop
         # Drop rate increases with depth
