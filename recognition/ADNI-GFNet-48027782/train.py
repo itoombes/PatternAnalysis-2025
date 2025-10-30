@@ -5,7 +5,8 @@ from modules import GFNet
 import time
 import pickle
 from sys import argv
-import pandas
+import numpy as np
+import pandas as pd
 
 # File save locations
 MODEL_SAVE_LOCATION = 'model.pt'
@@ -135,7 +136,68 @@ def train_model():
     pickle.dump(loss_over_time, open(LOSS_OVER_TIME_SAVE, 'wb'))
     pickle.dump(validation_loss_over_time, open(VALIDATION_LOSS_SAVE, 'wb'))
 
+def evaluate():
+    # Use CUDA if available
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'Using device: {torch.cuda.get_device_name(device)}')
+
+    # Load model with specified hyperparameters
+    start_time = time.time()
+    print('Loading model... ', end='', flush=True)
+    model = GFNet(
+        img_size = (240, 256),
+        patch_size = (16, 16),
+        in_chans = 1,
+        embedded_dim = EMBEDDED_DIM,
+        depth = DEPTH,
+        mlp_ratio = MLP_RATIO,
+        drop_path_rate = DROP_PATH_RATE
+    ).to(device)
+
+    # Load the model
+    model.load_state_dict(torch.load(MODEL_SAVE_LOCATION, weights_only=True))
+    end_time = time.time()
+    print(f'Done! ({end_time - start_time:.2f}s)')
+
+    # Load the data
+    start_time = time.time()
+    print('Loading data... ', end='', flush=True)
+    dataloader = dataset.get_test_dataloader(batch_size=128)
+    end_time = time.time()
+    print(f'Done! ({end_time - start_time:.2f}s)')
+
+    # Run over training data and save into a pd.DataFrame
+    results = pd.DataFrame()
+    start_time = time.time()
+    print('Run over test set... ', end='', flush=True)
+    model.eval()
+    with torch.no_grad():
+        for batch_idx, (images, labels) in enumerate(dataloader):
+            # Run over data
+            images = images.to(device)
+            labels = labels.numpy()
+            output = model(images)
+
+            # Get predictions from the output
+            predicted = torch.max(output, 1)[1].cpu().numpy()
+            
+            # Append the results to the dataframe
+            new_results = np.stack([predicted, labels], axis=1)
+            results = pd.concat([results,
+                                 pd.DataFrame(new_results,
+                                              columns=['Pred', 'True'])], 
+                                ignore_index = True)
+    end_time = time.time()
+    print(f'Done! ({end_time - start_time:.2f}s)')
+
+    print(results)
+
 if __name__ == "__main__":
+    '''
+    If no arguments, run model training
+    If argument is 'eval', run model evaluation
+    If argument is 'vis', visualise the training & validation loss over time
+    '''
     if len(argv) == 1:
         print('Training')
         train_model()
@@ -143,6 +205,8 @@ if __name__ == "__main__":
     
     if argv[1] == 'eval':
         print('Evaluation')
+        evaluate()
+        exit()
     
     if argv[1] == 'vis':
         print('Visualisation')
