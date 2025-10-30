@@ -52,10 +52,11 @@ def train_model():
     optimiser = torch.optim.AdamW(params, eps=1e-8)
 
     # Load training and validation datasets
-    validation_loader, training_loader = dataset.get_validation_and_training_dataloaders(10, 128, 0.2)
+    validation_loader, training_loader = dataset.get_validation_and_training_dataloaders(128, 128, 0.2)
 
     # Train the model
     for e in range(N_EPOCHS):
+        print(f'Epoch {e}: ', end='', flush=True)
         start_time = time.time()
         model.train()
         total_loss = 0
@@ -67,7 +68,7 @@ def train_model():
             # Forward pass
             outputs = model(images)
             loss = criterion(outputs, labels)
-            total_loss = loss
+            total_loss += loss
 
             optimiser.zero_grad()
             loss.backward()
@@ -76,7 +77,7 @@ def train_model():
         end_time = time.time()
         avg_loss = total_loss / len(training_loader.dataset)
 
-        print(f'Epoch {e}: {end_time - start_time:.2f}, {avg_loss}')
+        print(f'{end_time - start_time:.2f}s, {avg_loss}')
 
 
 if __name__ == "__main__":

@@ -32,7 +32,9 @@ class GlobalFilter(nn.Module):
         self.complex_weight = nn.Parameter(torch.randn(h, w // 2 + 1, dim, 2,
                 dtype=torch.float32) * 0.02) 
         
+        # Patch height
         self.h = h
+        # Patch width
         self.w = w
     
     def forward(self, x):
