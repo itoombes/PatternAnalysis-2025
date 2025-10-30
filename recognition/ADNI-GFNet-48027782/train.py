@@ -8,7 +8,7 @@ from sys import argv
 
 # File save locations
 LOSS_OVER_TIME_SAVE = "loss.pkl"
-VALIDATION_SCORES_SAVE = 'validation_scores.pkl'
+VALIDATION_LOSS_SAVE = 'validation_scores.pkl'
 
 # Number of training epochs
 N_EPOCHS = 6 
@@ -61,7 +61,7 @@ def train_model():
 
     # Used to save statistics
     loss_over_time = list()
-    validation_accuracy = dict()
+    validation_loss_over_time = dict()
 
     # Train the model
     for e in range(N_EPOCHS):
@@ -84,15 +84,41 @@ def train_model():
             loss.backward()
             optimiser.step()
 
-        # Print stats, and compute average loss
+        # Print stats and compute average loss
         end_time = time.time()
         avg_loss = total_loss / len(training_loader)
         print(f'{end_time - start_time:.2f}s, {avg_loss}')
         # Save average loss
         loss_over_time.append(avg_loss)
     
+        # Evaluate during every interval
+        if ((e + 1) % EVAL_INT == 0):
+            print('Validating... ', end='', flush=True)
+            start_time = time.time()
+            
+            model.eval()
+            with torch.no_grad():
+                total_loss = 0
+                for batch_idx, (images, labels) in enumerate(validation_loader):
+                    images = images.to(device)
+                    labels = labels.to(device)
+
+                    # Forward pass
+                    outputs = model(images)
+                    loss = criterion(outputs, labels)
+                    total_loss += loss.item()
+                
+            # Print stasts and compute average loss
+            end_time = time.time()
+            avg_loss = total_loss / len(validation_loader)
+            print(f'{end_time - start_time:.2f}s, {avg_loss}')
+            # Save average loss
+            validation_loss_over_time[e] = avg_loss
+
+    
     # Save the statistics
     pickle.dump(loss_over_time, open(LOSS_OVER_TIME_SAVE, 'wb'))
+    pickle.dump(validation_loss_over_time, open(VALIDATION_LOSS_SAVE, 'wb'))
 
 if __name__ == "__main__":
     if len(argv) == 1:
@@ -106,3 +132,4 @@ if __name__ == "__main__":
     if argv[1] == 'vis':
         print('Visualisation')
         print(pickle.load(open(LOSS_OVER_TIME_SAVE, "rb")))
+        print(pickle.load(open(VALIDATION_LOSS_SAVE, 'rb')))
