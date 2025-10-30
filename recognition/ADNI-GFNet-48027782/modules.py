@@ -5,7 +5,6 @@ from timm.layers.drop import DropPath
 from timm.layers.helpers import to_2tuple
 from torch.nn.init import trunc_normal_
 from functools import partial
-import math
 
 '''
 Many of the classes within have been transferred from gfnet.py,
@@ -26,24 +25,24 @@ class GlobalFilter(nn.Module):
     a learnable weight, and then performs an inverse Fourier transform back to
     the original dimensions
     '''
-    def __init__(self, dim, h=14, w=8):
+    def __init__(self, dim, h = 14, w = 8):
         super().__init__()
         # complex_weight is the learnable filter
         self.complex_weight = nn.Parameter(torch.randn(h, w, dim, 2,
                 dtype=torch.float32) * 0.02) 
     
-    def forward(self, x, spatial_size=None):
-        # Pretty sure N is embedded dimension, C is number of input channels
-        batch, N, C = x.shape
+    def forward(self, x):
+        # N is number of patches, C is embedded dimension
+        print(x.shape)
+        batch_size, N, C = x.shape
         
-        # Determine size to use for Fourier transform
-        if spatial_size is None:
-            a = b = int(math.sqrt(N))
-        else:
-            a, b = spatial_size
-
-        # Change input shape & type to prepare for 
-        x = x.view(batch, a, b, C)
+        # Manual fix to spatial_size
+        # Number of patches is 240, so standard GFNet method of splitting into
+        # a, b = int(math.sqrt(N)) breaks x.view(), as 15 * 15 < 240
+        a, b = 15, 16
+        
+        # Change input shape & type to prepare for Fourier
+        x = x.view(batch_size, a, b, C)
         x = x.to(torch.float32)
 
         # Transform to frequency space
@@ -55,13 +54,13 @@ class GlobalFilter(nn.Module):
         x = irfft2(x, s=(a, b), dim=(1, 2), norm='ortho')
 
         # Return x back to original shape
-        x = x.reshape(batch, N, C)
+        x = x.reshape(batch_size, N, C)
 
         return x
     
 class MultiLayerPerceptron(nn.Module):
     '''
-    Multilayer Perceptron
+    Multilayer Perceptron, taken from GFNet.py
     
     Two fully connected layers, with an activation function between them
     Uses the same dropout on both layers.
@@ -105,21 +104,22 @@ class GFNetBlock(nn.ModuleDict):
         '''
         super().__init__()
         self.norm1 = norm_layer(dim)
-        self.filter = GlobalFilter(dim, h=h, w=w)
+        self.filter = GlobalFilter(dim, h = h, w = w)
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = MultiLayerPerceptron(in_features=dim,
-                hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
+        self.mlp = MultiLayerPerceptron(in_features = dim,
+                hidden_features = mlp_hidden_dim, act_layer = act_layer,
+                drop = drop)
     
     def forward(self, x):
         y = self.norm1(x)
-        y = self.filter(x)
-        y = self.norm2(x)
-        y = self.mlp(x)
+        y = self.filter(y)
+        y = self.norm2(y)
+        y = self.mlp(y)
         # Drop-path is a dropout variant which removes paths, not just
         # individual nodes
-        y = self.drop_path(x)
+        y = self.drop_path(y)
 
         return x + y
 
@@ -197,7 +197,7 @@ class GFNet(nn.Module):
         self.pos_drop = nn.Dropout(p=drop_rate)
 
         h = img_size[0] // patch_size[0]
-        w = img_size[1] // patch_size[1]
+        w = h
 
         # Not using uniform drop
         # Drop rate increases with depth
@@ -205,8 +205,8 @@ class GFNet(nn.Module):
 
         self.blocks = nn.ModuleList([
             GFNetBlock(
-                dim=embedded_dim, mlp_ratio=mlp_ratio, drop=drop_rate,
-                drop_path=dpr[i], norm_layer=norm_layer, h=h, w=w
+                dim = embedded_dim, mlp_ratio = mlp_ratio, drop = drop_rate,
+                drop_path = dpr[i], norm_layer = norm_layer, h = h, w = w
             ) for i in range(depth)])
         
         self.norm = norm_layer(embedded_dim)
