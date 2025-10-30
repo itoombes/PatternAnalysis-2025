@@ -7,6 +7,10 @@ import torchvision.transforms.v2 as v2
 from torchvision.io.image import decode_image
 import random
 
+# Location of data folder
+# Make sure to include the last '/' character
+ADNI_ROOT = 'C:/Users/itoom/COMP3710/ADNI/'
+
 # Pre-processing transforms used on the data
 TRANSFORM = v2.Compose([
     v2.ToDtype(torch.float32, scale=True), # Force datatype compatibility

@@ -98,19 +98,16 @@ To avoid contamination of data, the following process was used:
 ## File structure
 
 ### dataset.py
-Contains an `Adni()` class, initalised with a filepath to the ADNI dataset, with the following key methods:
- - `__init__(base_directory, validation_split, validation_split_base)`:
-    - `base_directory` specifies the location of the ADNI dataset. On Rangpur, this is `/home/groups/comp3710/data/ADNI`.
-    - `validation_split`, which specifies the proportion of `train` data to use for a validation set
-    - `validation_split_base`, which is used as a randomness seed to ensure reproducability.
- - `get_test_dataloader()`, which returns a `torch.DataLoader()` of the ADNI 'test' data.
- - `get_validation_and_training_dataloaders()`, which returns `torch.DataLoader()`s containing the ADNI 'train' data, split according to `validation_split`.
+Responsible for loading the ADNI data into PyTorch `torch.utils.data.DataLoader` objects.
+Loads images via the `torchvision.io.image.decode_image()` method, and applies a `torchvision.transforms.v2.ToDytpe(torch.float32, scale=True)` transform to ensure it is in a compatible format with the GFNet modules.
 
-There are other helper methods within the file, such as:
- - `Adni.get_test_data()` & `Adni.get_training_and_validation_data()`, which return `torch.TensorDataset()`s instead of `torch.DataLoader()`.
- - `load_image()`, which uses PIL and NumPy to load an image into a \<channel\> × \<width\> × \<height\> array.
- - `load_directory()`, which loads every image in a directory into a NumPy array.
- - `load_directory_by_id()`, which creates a `dict()` linking every patient ID within a directory to their respective images, loaded in a NumPy array. Used for splitting the 'train' data into training and validation datasets.
+The following key methods are available:
+ - `get_test_dataloader()`, which returns a `DataLoader` created from the `ADNI/AD_NC/test/` folder.
+ - `get_validation_and_training_dataloaders()`, which does the following:
+    - Randomly splits the `ADNI/AD_NC/train/` folder into a validation and training partitions, by patient ID
+    - Returns two distinct `DataLoader`s from these partitions
+
+Note that `get_validation_and_training_dataloaders()` has a `seed` parameter, which can be used to ensure the validation and training split is reproducible.
 
 ### modules.py
 Contains `torch.nn.Module()` subclasses adapted from the original GFNet GitHub page [2], namely:
@@ -128,7 +125,12 @@ Contains `torch.nn.Module()` subclasses adapted from the original GFNet GitHub p
 
 ### predict.py
 
+## Usage
+Changing the file location of the ADNI dataset:
+ - The `ADNI_ROOT` variable in `dataset.py` is used as the location of the ADNI dataset
+ - By default, it is set to `/home/groups/comp3710/data/ADNI/`
+
 ## References
 [1] Alzheimer's Disease Neuroimaging Initiative, "ADNI | Alzheimer's disease neuroimaging initiative," 2025. [Online] [https://adni.loni.usc.edu/](https://adni.loni.usc.edu/)
 
-[2] Y. Rao, W. Zhao, Z. Zhu, J. Zhou, and J. Lu, "Global Filter Networks for Image Classification," 2021, arXiV: 2107.00645. [Online] [https://arxiv.org/abs/2107.00645](https://arxiv.org/abs/2107.00645)
+[2] Y. Rao, W. Zhao, Z. Zhu, J. Zhou, and J. Lu, "Global Filter Networks for Image Classification," 2021, arXiV: 2107.00645. [Online] [https://arxiv.org/abs/2107.00645](https://arxiv.org/abs/2107.00645)1`
