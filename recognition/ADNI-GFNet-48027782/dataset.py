@@ -61,15 +61,16 @@ def split_validation_and_training(folder: str, seed: int | None = None,
     return (validation_map, training_map)
 
 class ImageDataset(Dataset):
-    def __init__(self, root: str, cn_files: list, ad_files: list,
+    def __init__(self, subfolder: str, cn_files: list, ad_files: list,
                  transform: v2.Transform | None = None):
         '''
-        root: Folder containing the 'AD' and 'CN' subfolders
+        subfolder: Either TEST_PATH or TRAIN_PATH, depending on where images are
+            being stored. 
         cn_files: Files in the 'Cognitive Normal' category
         ad_files: Files in the 'Alzheimer's Detected' category
         transform: torchvision transform to apply to image
         '''
-        self.root = root
+        self.subfolder = subfolder
         self.cn_files = cn_files
         self.ad_files = ad_files
         self.transform = transform
@@ -87,7 +88,7 @@ class ImageDataset(Dataset):
         cn_files.
         '''
         label = None
-        filepath = self.root
+        filepath = ADNI_ROOT + self.subfolder
         # Extract label and full filepath
         if (idx >= len(self.cn_files)):
             # Using the ad_files list
@@ -106,47 +107,41 @@ class ImageDataset(Dataset):
         
         return image, label
 
-def get_test_dataset(adni_root: str,
-                     transform: v2.Transform | None = None) -> ImageDataset:
+def get_test_dataset(transform: v2.Transform | None = None) -> ImageDataset:
     '''
     Load the dataset containing the test data
 
-    adni_root: Filepath to ADNI dataset
     transform: Image transform to be applied to each image
     '''
-    # Location within ADNI where test data is stored
-    test_root = adni_root + TEST_PATH
-    
+    data_root = ADNI_ROOT + TEST_PATH 
     # Get file names within each subfolder
-    cn_files = os.listdir(test_root + CONTROL_PATH)
-    ad_files = os.listdir(test_root + PRESENT_PATH) 
+    cn_files = os.listdir(data_root + CONTROL_PATH)
+    ad_files = os.listdir(data_root + PRESENT_PATH) 
 
     # Initialise and return the dataset
-    return ImageDataset(test_root, cn_files, ad_files, transform=transform)
+    return ImageDataset(TEST_PATH, cn_files, ad_files, transform=transform)
 
-def get_test_dataloader(adni_root: str, **kwargs) -> DataLoader:
+def get_test_dataloader(**kwargs) -> DataLoader:
     '''
     Create a dataloader containing the test data.
 
-    adni_root: Filepath to ADNI dataset
     **kwargs: Keyword arguments passed to dataloader
     '''
     # Load the test dataset with default transform
-    dataset = get_test_dataset(adni_root, transform=TRANSFORM)
+    dataset = get_test_dataset(transform = TRANSFORM)
     return DataLoader(dataset, **kwargs)
 
-def get_validation_and_training_datasets(adni_root: str,
-            validation_split: float = 0.2, transform: v2.Transform | None = None,
-            seed: int | None = None) -> tuple[Dataset, Dataset]:
+def get_validation_and_training_datasets(validation_split: float = 0.2,
+                                        transform: v2.Transform | None = None,
+                                        seed: int | None = None) -> tuple[Dataset, Dataset]:
     '''
     Read the training folder, separate it into a validation and test dataset.
 
-    adni_root: Filepath to ADNI dataset
     validation_split: Proportion of dataset to put in validation dataset
     transform: Image transform to be applied to each image
     seed: Seed to initialise random.seed() for reproducibility
     '''
-    train_root = adni_root + TRAIN_PATH
+    train_root = ADNI_ROOT + TRAIN_PATH
     cn_root = train_root + CONTROL_PATH
     ad_root = train_root + PRESENT_PATH
 
@@ -167,22 +162,20 @@ def get_validation_and_training_datasets(adni_root: str,
     training_ad = [c for r in training_ad for c in r]
 
     # Convert into datasets & return
-    validation_set = ImageDataset(train_root, validation_cn, validation_ad,
-                              transform=transform)
-    training_set = ImageDataset(train_root, training_cn, training_ad,
-                              transform=transform)
+    validation_set = ImageDataset(TRAIN_PATH, validation_cn, validation_ad,
+                                  transform = transform)
+    training_set = ImageDataset(TRAIN_PATH, training_cn, training_ad,
+                                transform = transform)
     return (validation_set, training_set)
 
-def get_validation_and_training_dataloaders(adni_root: str,
-        training_batch_size: int, validation_batch_size: int,
-        validation_split: float = 0.2, shuffle_training: bool = True,
-        shuffle_validation: bool = False,
+def get_validation_and_training_dataloaders(training_batch_size: int,
+        validation_batch_size: int, validation_split: float = 0.2,
+        shuffle_training: bool = True, shuffle_validation: bool = False,
         seed: int | None = None) -> tuple[DataLoader, DataLoader]:
     '''
     Create dataloaders containing the training data, separated into training
     and validation sets. Returns in order (validation, training).
 
-    adni_root: Filepath to ADNI dataset
     training_batch_size: Batch size of training data loader
     validation_batch_size: Batch size of validation data loader
     validation_split: Proportion of ADNI training dataset to use for validation
@@ -191,8 +184,7 @@ def get_validation_and_training_dataloaders(adni_root: str,
     seed: Seed passed to random.seed(), for reproducibility
     '''
     validation_set, training_set = get_validation_and_training_datasets(
-        adni_root, validation_split=validation_split, transform=TRANSFORM,
-        seed = seed)
+        validation_split=validation_split, transform=TRANSFORM, seed = seed)
     
     validation = DataLoader(validation_set, batch_size = validation_batch_size,
                             shuffle = shuffle_validation)
