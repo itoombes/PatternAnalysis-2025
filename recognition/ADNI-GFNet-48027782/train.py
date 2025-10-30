@@ -67,6 +67,7 @@ def train_model():
 
             # Forward pass
             outputs = model(images)
+            print(outputs[1])
             loss = criterion(outputs, labels)
             total_loss += loss
 

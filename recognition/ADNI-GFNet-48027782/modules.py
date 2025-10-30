@@ -213,6 +213,7 @@ class GFNet(nn.Module):
 
         # Classifier head - coverts embedded dimension to prediction
         self.head = nn.Linear(self.embedded_dim, num_classes)
+        self.to_pred = nn.Sigmoid()
 
         # Initialise embedded position init via truncated normal distribution
         # Original GFNet used TIMM preview version; now just a part of PyTorch
@@ -251,4 +252,4 @@ class GFNet(nn.Module):
 
         # Run through classifier head and return
         x = self.head(x)
-        return x
+        return self.to_pred(x)
