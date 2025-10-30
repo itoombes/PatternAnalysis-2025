@@ -120,8 +120,16 @@ Contains `torch.nn.Module()` subclasses adapted from the original GFNet GitHub p
     - It is then position-embedded with a set of learnable parameters (`torch.nn.Parameter()`)
     - The embedded space is then fed through $n$ `GFNetBlock()` modules
     - The output from the last `GFNetBlock()` is then normalised and average-pooled (using `torch.nn.LayerNorm()` with `torch.mean()`)
-    - Finally, the output is run through a `torch.nn.Linear()` module, to get the final model classification
+    - Finally, the output is run through a `torch.nn.Linear()` and `torch.nn.Sigmoid()` module, to get the final model classification
+
+Note that the model weights are initialised stochastically, meaning that results may not always be reproducible.
 ### train.py
+
+Runnable file
+ - To train a model, run `py train.py` with no arguments
+ - Once a model has been trained, run:
+    - `py train.py eval`, to test the model
+    - `py train.py vis`, to visualise the model's loss and validation score over time
 
 ### predict.py
 
