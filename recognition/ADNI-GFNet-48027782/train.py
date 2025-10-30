@@ -190,7 +190,8 @@ def evaluate():
     end_time = time.time()
     print(f'Done! ({end_time - start_time:.2f}s)')
 
-    print(results)
+    num_correct = len(results[results['Pred'] == results['True']])
+    print(f'Accuracy: {(num_correct / len(results))*100:.2f}%')
 
 if __name__ == "__main__":
     '''
