@@ -5,9 +5,11 @@ from modules import GFNet
 import time
 import pickle
 from sys import argv
+import pandas
 
 # File save locations
-LOSS_OVER_TIME_SAVE = "loss.pkl"
+MODEL_SAVE_LOCATION = 'model.pt'
+LOSS_OVER_TIME_SAVE = 'loss.pkl'
 VALIDATION_LOSS_SAVE = 'validation_scores.pkl'
 
 # Number of training epochs
@@ -63,6 +65,9 @@ def train_model():
     loss_over_time = list()
     validation_loss_over_time = dict()
 
+    # Track model performance across validations
+    best_model_loss = -1
+
     # Train the model
     for e in range(N_EPOCHS):
         print(f'Epoch {e}: ', end='', flush=True)
@@ -108,14 +113,24 @@ def train_model():
                     loss = criterion(outputs, labels)
                     total_loss += loss.item()
                 
-            # Print stasts and compute average loss
+            # Print stats and compute average loss
             end_time = time.time()
             avg_loss = total_loss / len(validation_loader)
             print(f'{end_time - start_time:.2f}s, {avg_loss}')
             # Save average loss
             validation_loss_over_time[e] = avg_loss
 
-    
+            # If have better model, save it
+            if (avg_loss < best_model_loss or best_model_loss < 0):
+                print('\tNew best model!')
+                best_model_loss = avg_loss
+                # Save the model
+                torch.save(model.state_dict(), MODEL_SAVE_LOCATION)
+                # Save statistics, in case program is distrupted
+                pickle.dump(loss_over_time, open(LOSS_OVER_TIME_SAVE, 'wb'))
+                pickle.dump(validation_loss_over_time,
+                            open(VALIDATION_LOSS_SAVE, 'wb'))
+
     # Save the statistics
     pickle.dump(loss_over_time, open(LOSS_OVER_TIME_SAVE, 'wb'))
     pickle.dump(validation_loss_over_time, open(VALIDATION_LOSS_SAVE, 'wb'))
