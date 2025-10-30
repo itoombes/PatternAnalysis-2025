@@ -129,7 +129,8 @@ class PatchEmbed(nn.Module):
     
     Uses convolution to get the patches and embedded dimension, then flattens
     '''
-    def __init__(self, img_size = (240, 256), patch_size = (16, 16), in_chans=1, embedded_dim=768):
+    def __init__(self, img_size = (240, 256), patch_size = (16, 16),
+                 in_chans = 1, embedded_dim=768):
         '''
         img_size: size of the input image, in either 2tuple or single-side dimension
         patch_size: size of the input image, in either 2tuple or single-side dimension
@@ -145,7 +146,7 @@ class PatchEmbed(nn.Module):
         
         # Determine number of patches based on image and patch size
         self.num_patches = ((int(self.img_size[0]) // int(self.patch_size[0]))
-                * (int(self.img_size[1]) * int(self.img_size[1])))
+                * (int(self.img_size[1]) // int(self.img_size[1])))
         
         # Conv. layer used to extract patches & project onto embedded dimension
         self.proj = nn.Conv2d(in_chans, embedded_dim, kernel_size=patch_size, stride=patch_size)
@@ -160,7 +161,9 @@ class PatchEmbed(nn.Module):
         # Patch & embed the image
         x = self.proj(x)
         # Flatten into embedded space
-        x = self.proj(x).flatten(2).transpose(1, 2)
+        x = x.flatten(2).transpose(1, 2)
+
+        return x
 
 class GFNet(nn.Module):
     '''

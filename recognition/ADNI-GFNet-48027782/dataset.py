@@ -168,16 +168,16 @@ def get_validation_and_training_datasets(validation_split: float = 0.2,
                                 transform = transform)
     return (validation_set, training_set)
 
-def get_validation_and_training_dataloaders(training_batch_size: int,
-        validation_batch_size: int, validation_split: float = 0.2,
+def get_validation_and_training_dataloaders(validation_batch_size: int,
+        training_batch_size: int, validation_split: float = 0.2,
         shuffle_training: bool = True, shuffle_validation: bool = False,
         seed: int | None = None) -> tuple[DataLoader, DataLoader]:
     '''
     Create dataloaders containing the training data, separated into training
     and validation sets. Returns in order (validation, training).
 
-    training_batch_size: Batch size of training data loader
     validation_batch_size: Batch size of validation data loader
+    training_batch_size: Batch size of training data loader
     validation_split: Proportion of ADNI training dataset to use for validation
     shuffle_training: Whether to shuffle the training loader
     shuffle_validation: Whether to shuffle the validation loader
