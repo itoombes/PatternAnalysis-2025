@@ -14,19 +14,19 @@ LOSS_OVER_TIME_SAVE = 'loss.pkl'
 VALIDATION_LOSS_SAVE = 'validation_scores.pkl'
 
 # Number of training epochs
-N_EPOCHS = 6 
+N_EPOCHS = 500 
 # Interval between evaluations
-EVAL_INT = 2
+EVAL_INTERVAL = 5
 
-# Model hyperparameters
+# Model hyperparameters -- based on GFNet-ti
 # Embedded dimension
-EMBEDDED_DIM = 100 
+EMBEDDED_DIM = 256 
 # Ratio of embedded dimension to multi-layer perceptron
-MLP_RATIO = 2
+MLP_RATIO = 4
 # Number of model blocks
-DEPTH = 5
+DEPTH = 12
 # Path dropout rate; increases by this increment after each block
-DROP_PATH_RATE = 0.01
+DROP_PATH_RATE = 0.05
 
 
 def train_model():
@@ -98,7 +98,7 @@ def train_model():
         loss_over_time.append(avg_loss)
     
         # Evaluate during every interval
-        if ((e + 1) % EVAL_INT == 0):
+        if ((e + 1) % EVAL_INTERVAL == 0):
             print('Validating... ', end='', flush=True)
             start_time = time.time()
             
