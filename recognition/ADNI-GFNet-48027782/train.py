@@ -29,6 +29,12 @@ DEPTH = 12
 # Path dropout rate; increases by this increment after each block
 DROP_PATH_RATE = 0.05
 
+# Whether to use a LR scheduler
+# Currently setup to be CosineAnnealingLr
+USE_SCHEDULER = False
+
+# Seed to use for validation split
+VALIDATION_SEED = 42
 
 def train_model():
     # Use CUDA if available
@@ -60,10 +66,14 @@ def train_model():
 
     optimiser = torch.optim.AdamW(params, eps=1e-8, lr=0.01)
     # Load into a scheduler
-    scheduler = CosineAnnealingLR(optimizer=optimiser, T_max=40, eta_min=0.0005) 
+    if USE_SCHEDULER:
+        scheduler = CosineAnnealingLR(optimizer = optimiser, T_max = 40,
+                                      eta_min = 0.0005) 
 
-    # Load training and validation datasets
-    validation_loader, training_loader = dataset.get_validation_and_training_dataloaders(128, 128, 0.2, seed=42)
+    # Load training and validation data
+    validation_loader, training_loader = (
+        dataset.get_validation_and_training_dataloaders(128, 128, 0.2,
+                                                        seed = VALIDATION_SEED))
 
     # Used to save statistics
     loss_over_time = list()
@@ -136,7 +146,8 @@ def train_model():
                             open(VALIDATION_LOSS_SAVE, 'wb'))
         
         # Step the learning rate
-        scheduler.step()
+        if USE_SCHEDULER:
+            scheduler.step()
 
     # Save the statistics
     pickle.dump(loss_over_time, open(LOSS_OVER_TIME_SAVE, 'wb'))
@@ -161,24 +172,29 @@ def evaluate():
     ).to(device)
 
     # Load the model
-    model.load_state_dict(torch.load(MODEL_SAVE_LOCATION, weights_only=True))
+    model.load_state_dict(torch.load(MODEL_SAVE_LOCATION, weights_only = True))
     end_time = time.time()
     print(f'Done! ({end_time - start_time:.2f}s)')
 
-    # Load the data
     start_time = time.time()
     print('Loading data... ', end='', flush=True)
-    dataloader = dataset.get_test_dataloader(batch_size=128)
+    # Load testing data
+    test_loader = dataset.get_test_dataloader(batch_size = 128)
+    # Load training and validation data
+    validation_loader, training_loader = (
+        dataset.get_validation_and_training_dataloaders(128, 128, 0.2,
+                                                        seed = VALIDATION_SEED))
     end_time = time.time()
     print(f'Done! ({end_time - start_time:.2f}s)')
 
-    # Run over training data and save into a pd.DataFrame
-    results = pd.DataFrame()
+    # Run over the data
+    model.eval()
+    # Load the test results into a DataFrame 
+    test_results = pd.DataFrame()
     start_time = time.time()
     print('Run over test set... ', end='', flush=True)
-    model.eval()
     with torch.no_grad():
-        for batch_idx, (images, labels) in enumerate(dataloader):
+        for batch_idx, (images, labels) in enumerate(test_loader):
             # Run over data
             images = images.to(device)
             labels = labels.numpy()
@@ -189,15 +205,69 @@ def evaluate():
             
             # Append the results to the dataframe
             new_results = np.stack([predicted, labels], axis=1)
-            results = pd.concat([results,
-                                 pd.DataFrame(new_results,
-                                              columns=['Pred', 'True'])], 
-                                ignore_index = True)
+            test_results = pd.concat([test_results,
+                    pd.DataFrame(new_results, columns=['Pred', 'True'])], 
+                                 ignore_index = True)
     end_time = time.time()
     print(f'Done! ({end_time - start_time:.2f}s)')
 
-    num_correct = len(results[results['Pred'] == results['True']])
-    print(f'Accuracy: {(num_correct / len(results))*100:.2f}%')
+    # Load the validation results into a DataFrame 
+    validation_results = pd.DataFrame()
+    start_time = time.time()
+    print('Run over validation set... ', end='', flush=True)
+    with torch.no_grad():
+        for batch_idx, (images, labels) in enumerate(validation_loader):
+            # Run over data
+            images = images.to(device)
+            labels = labels.numpy()
+            output = model(images)
+
+            # Get predictions from the output
+            predicted = torch.max(output, 1)[1].cpu().numpy()
+            
+            # Append the results to the dataframe
+            new_results = np.stack([predicted, labels], axis=1)
+            validation_results = pd.concat([validation_results,
+                    pd.DataFrame(new_results, columns=['Pred', 'True'])], 
+                                 ignore_index = True)
+    end_time = time.time()
+    print(f'Done! ({end_time - start_time:.2f}s)')  
+    
+    # Load the training results into a DataFrame 
+    training_results = pd.DataFrame()
+    start_time = time.time()
+    print('Run over training set... ', end='', flush=True)
+    with torch.no_grad():
+        for batch_idx, (images, labels) in enumerate(training_loader):
+            # Run over data
+            images = images.to(device)
+            labels = labels.numpy()
+            output = model(images)
+
+            # Get predictions from the output
+            predicted = torch.max(output, 1)[1].cpu().numpy()
+            
+            # Append the results to the dataframe
+            new_results = np.stack([predicted, labels], axis=1)
+            training_results = pd.concat([training_results,
+                    pd.DataFrame(new_results, columns=['Pred', 'True'])], 
+                                 ignore_index = True)
+    end_time = time.time()
+    print(f'Done! ({end_time - start_time:.2f}s)')
+
+    # Print accuracy results
+
+    validation_correct = len(
+        validation_results[validation_results['Pred'] == validation_results['True']])
+    print(f'Validation Accuracy: {(validation_correct / len(validation_results))*100:.2f}%')
+
+    training_correct = len(
+        training_results[training_results['Pred'] == training_results['True']])
+    print(f'Training Accuracy: {(training_correct / len(training_results))*100:.2f}%')
+
+    test_correct = len(
+        test_results[test_results['Pred'] == test_results['True']])
+    print(f'Test Accuracy: {(test_correct / len(test_results))*100:.2f}%')
 
 if __name__ == "__main__":
     '''
