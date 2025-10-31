@@ -163,7 +163,19 @@ Expects to be run as `py predict.py <path_to_image>`, and returns on the console
 It was decided to perform model training on a local Nvidia RTX 3070, as it was anticipated that the UQ Ranpgur cluster would be under heavy load.
 To that end, the reason why GFNet was selected as a model archicture to begi with was due to its claimed efficiency benefits in comparison to equivalent models, such as convolutional neural nets and vision transformers.
 
-As such, the GFModel used in training was based on the `gfnet-ti` model on the GFNet GitHub page [2], as it was found that models of a larger size (i.e., `gfnet-xs') were too demanding on the available VRAM.
+The GFModel used in training was based on the `gfnet-ti` model on the GFNet GitHub page [2], as it was found that models of a larger size (i.e., `gfnet-xs') were too demanding on the available VRAM.
+This uses an embedded dimension of $256$, an embedded dimension to MLP ratio of $4$, and a depth of $12$ global fliter to MLP blocks. 
+Key modifications to the orignial `gfnet-ti` implementation are: 
+ - Adjusting the input to fit a 256x240 8-bit grayscale image
+ - Changing from multi-class to binary classification
+ - The addition of dropout, as early tests indicated a significant amount of dropout
+
+Two optimisers were used with the approach, based on the default optimiser used for the original GFNet [2].
+Both use the `torch.optim.AdamW` implentation of the AdamW optimiser, which is a variant Adam optimiser with decoupled weight decay.
+All parameters in the model were given a weight decay amount of $0.05$, except for the position-embedding weights which had no weight decay.
+The default first-order and second-order momentums were used, at $0.9$ and $0.99$ respectively.
+
+The difference between the optimisers were in the learning rate. One optimiser used a learning rate of $0.01$, while the other used a `torch.optim.lr_scheduler.CosineAnnealingLR` learning rate scheduler, with a minimum learning rate of $0.0005$ and a period of 40 training epochs.
 
 ## References
 [1] Alzheimer's Disease Neuroimaging Initiative, "ADNI | Alzheimer's disease neuroimaging initiative," 2025. [Online] [https://adni.loni.usc.edu/](https://adni.loni.usc.edu/)

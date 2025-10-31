@@ -15,7 +15,7 @@ LOSS_OVER_TIME_SAVE = 'loss.pkl'
 VALIDATION_LOSS_SAVE = 'validation_scores.pkl'
 
 # Number of training epochs
-N_EPOCHS = 400 
+N_EPOCHS = 150 
 # Interval between evaluations
 EVAL_INTERVAL = 5
 
@@ -27,7 +27,7 @@ MLP_RATIO = 4
 # Number of model blocks
 DEPTH = 12
 # Path dropout rate; increases by this increment after each block
-DROP_PATH_RATE = 0.05
+DROP_PATH_RATE = 0.2
 
 # Whether to use a LR scheduler
 # Currently setup to be CosineAnnealingLr
