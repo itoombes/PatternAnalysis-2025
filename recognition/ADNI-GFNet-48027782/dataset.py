@@ -9,7 +9,7 @@ import random
 
 # Location of data folder
 # Make sure to include the last '/' character
-ADNI_ROOT = 'C:/Users/itoom/COMP3710/ADNI/'
+ADNI_ROOT = '/home/groups/comp3710/ADNI/'
 
 # Pre-processing transforms used on the data
 TRANSFORM = v2.Compose([
