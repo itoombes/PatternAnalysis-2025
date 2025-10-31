@@ -15,7 +15,7 @@ LOSS_OVER_TIME_SAVE = 'loss.pkl'
 VALIDATION_LOSS_SAVE = 'validation_scores.pkl'
 
 # Number of training epochs
-N_EPOCHS = 150 
+N_EPOCHS = 100 
 # Interval between evaluations
 EVAL_INTERVAL = 5
 
