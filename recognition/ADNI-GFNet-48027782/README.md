@@ -109,6 +109,10 @@ The following key methods are available:
 
 Note that `get_validation_and_training_dataloaders()` has a `seed` parameter, which can be used to ensure the validation and training split is reproducible.
 
+#### Changing the file location of the ADNI dataset:
+ - The `ADNI_ROOT` variable in `dataset.py` is used as the location of the ADNI dataset
+ - By default, it is set to `/home/groups/comp3710/data/ADNI/`
+
 ### modules.py
 Contains `torch.nn.Module()` subclasses adapted from the original GFNet GitHub page [2], namely:
  - `PatternEmbed()`, which segments an input image into a pattern and embeds it into a one-dimensional 'embedded' space
@@ -124,19 +128,25 @@ Contains `torch.nn.Module()` subclasses adapted from the original GFNet GitHub p
 
 Note that the model weights are initialised stochastically, meaning that results may not always be reproducible.
 ### train.py
+Responsible for the training, validation, and testing of a GFNet model.
+Model hyperparameters, the save location of model statistics & parameters, and the seed used to determine the validation split, are controlled using global variables.
 
-Runnable file
+The file implements the following methods:
+ - `train_model()`, whch implements the model training cycle. Note that the optimiser and loss functions are defined here.
+ - `evaluate()`, which determines the accuracy of a trained model. Note that the function expects the loaded model to have the same hyperparameters as defined in the `train.py` file. 
+ - `visualise()`, which generates MatPlotLib diagrams of the model's training and validation scores over its epochs. 
+
+ #### Training a model, visualising training, and model evaluation:
  - To train a model, run `py train.py` with no arguments
  - Once a model has been trained, run:
-    - `py train.py eval`, to test the model
+    - `py train.py eval`, to generate the model's test statistics.
     - `py train.py vis`, to visualise the model's loss and validation score over time
 
 ### predict.py
+Runnable file which returns the predicted probability that a sample image belongs to either the 'Alzheimer's detected' or 'cognitive normal' class.
+Requires that the model has already been trained, and uses the same hyperparameters as defined in `train.py`.
 
-## Usage
-Changing the file location of the ADNI dataset:
- - The `ADNI_ROOT` variable in `dataset.py` is used as the location of the ADNI dataset
- - By default, it is set to `/home/groups/comp3710/data/ADNI/`
+Expects to be run as `py predict.py <path_to_image>`, and returns on the console.
 
 ## References
 [1] Alzheimer's Disease Neuroimaging Initiative, "ADNI | Alzheimer's disease neuroimaging initiative," 2025. [Online] [https://adni.loni.usc.edu/](https://adni.loni.usc.edu/)
