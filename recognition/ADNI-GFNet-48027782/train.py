@@ -269,6 +269,25 @@ def evaluate():
         test_results[test_results['Pred'] == test_results['True']])
     print(f'Test Accuracy: {(test_correct / len(test_results))*100:.2f}%')
 
+    # Extract true positive, false negative, true negative, false positive
+    test_positive = test_results[test_results['True'] == 1]
+    test_negative = test_results[test_results['Pred'] == 0]
+    test_tp = test_positive[test_positive['Pred'] == 1]
+    test_fn = test_positive[test_positive['Pred'] == 0]
+    test_tn = test_negative[test_negative['Pred'] == 0]
+    test_fp = test_negative[test_negative['Pred'] == 1]
+    print(f'True positive: {len(test_tp)}')
+    print(f'False negative: {len(test_fn)}')
+    print(f'True negative: {len(test_tn)}')
+    print(f'False positive: {len(test_fp)}')
+
+    # Using formulae from COMP4702 to get F1 score
+    recall = len(test_tp) / len(test_positive)
+    precision = len(test_tp) / (len(test_tp) + len(test_fp))
+    print(f'Recall: {recall}')
+    print(f'Precision: {precision}')
+    print(f'F1 score: {(2 * precision * recall) / (precision + recall)}')
+
 def visualise():
     # Load the statistics
     loss_over_time = pickle.load(open(LOSS_OVER_TIME_SAVE, 'rb'))

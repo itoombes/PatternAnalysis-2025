@@ -179,13 +179,22 @@ Cross entropy was used as the loss function.
 The difference between the optimisers were in the learning rate. One optimiser used the default learning rate of $0.001$, while the other used a `torch.optim.lr_scheduler.CosineAnnealingLR` learning rate scheduler, with a minimum learning rate of $0.0005$ and a period of 40 training epochs.
 
 ### Initial results
-Note that the number of epochs was made arbitrarily, and based on the amount of time available for the training process.
+Note that the number of epochs for each training method was made arbitrarily, and based on the amount of time available for the training process.
 
 #### Constant learning rate:
 ![Training and validation loss over time](figures/constant_lr_loss_over_time.png)
+Validation Accuracy: 76.21%
+Training Accuracy: 98.41%
+Test Accuracy: 60.97%
+True positive: 2548
+False negative: 1912
+True negative: 4851
+False positive: 0
+Recall: 0.5713004484304933
+Precision: 1.0
+F1 score: 0.7271689497716896
 
-
-Variable learning rate:
+#### Variable learning rate:
 
 ### Retraining based on original tests
 
