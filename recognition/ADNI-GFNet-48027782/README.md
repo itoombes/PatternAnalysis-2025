@@ -148,6 +148,23 @@ Requires that the model has already been trained, and uses the same hyperparamet
 
 Expects to be run as `py predict.py <path_to_image>`, and returns on the console.
 
+## Training & evaluating a model
+ - If not using Rangpur, change the `ADNI_ROOT` variable in the `dataset.py` file to the location of the ADNI folder
+ - Run `py train.py` to train a model
+   - Global variables within `train.py` control:
+     - Hyperparameters
+     - File save locations
+ - Once a model has been trained:
+   - Run `py train.py eval` to get accuracy statistics
+   - Run `py train.py vis` to visualise training & validation loss over time
+ - Run `py predict.py <image_path>` to classify an ADNI image with the trained model.
+
+## Training approach
+It was decided to perform model training on a local Nvidia RTX 3070, as it was anticipated that the UQ Ranpgur cluster would be under heavy load.
+To that end, the reason why GFNet was selected as a model archicture to begi with was due to its claimed efficiency benefits in comparison to equivalent models, such as convolutional neural nets and vision transformers.
+
+As such, the GFModel used in training was based on the `gfnet-ti` model on the GFNet GitHub page [2], as it was found that models of a larger size (i.e., `gfnet-xs') were too demanding on the available VRAM.
+
 ## References
 [1] Alzheimer's Disease Neuroimaging Initiative, "ADNI | Alzheimer's disease neuroimaging initiative," 2025. [Online] [https://adni.loni.usc.edu/](https://adni.loni.usc.edu/)
 
