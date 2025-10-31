@@ -37,6 +37,13 @@ USE_SCHEDULER = False
 VALIDATION_SEED = 42
 
 def train_model():
+    '''
+    Defines loss function optimiser for model
+    Splits data into training and validation sets, and trains the model
+    using specified global variables as hyperparameters.
+    
+    Saves model statistics and state parameter to specified file locations.
+    '''
     # Use CUDA if available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Using device: {torch.cuda.get_device_name(device)}')
@@ -154,6 +161,17 @@ def train_model():
     pickle.dump(validation_loss_over_time, open(VALIDATION_LOSS_SAVE, 'wb'))
 
 def evaluate():
+    '''
+    Loads a pre-trained model and evaluates its performance on every dataset.
+
+    Records accuracy for training & validation dataset.
+    For test dataset, records:
+     - Accuarcy
+     - True positive, true negative, false positive, false negative
+     - Recall, precision, and F1 score
+    
+    Prints results.
+    '''
     # Use CUDA if available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Using device: {torch.cuda.get_device_name(device)}')
@@ -289,6 +307,9 @@ def evaluate():
     print(f'F1 score: {(2 * precision * recall) / (precision + recall)}')
 
 def visualise():
+    '''
+    Loads statistics files and displays them in a MatPlotLib plot
+    '''
     # Load the statistics
     loss_over_time = pickle.load(open(LOSS_OVER_TIME_SAVE, 'rb'))
     validation_loss = pickle.load(open(VALIDATION_LOSS_SAVE, 'rb'))

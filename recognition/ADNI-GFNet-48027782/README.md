@@ -178,35 +178,55 @@ Cross entropy was used as the loss function.
 
 The difference between the optimisers were in the learning rate. One optimiser used the default learning rate of $0.001$, while the other used a `torch.optim.lr_scheduler.CosineAnnealingLR` learning rate scheduler, with a minimum learning rate of $0.0005$ and a period of 40 training epochs.
 
-### Initial results
+## Results from training
 Note that the number of epochs for each training method was made arbitrarily, and based on the amount of time available for the training process.
 
-#### Constant learning rate:
-![Training and validation loss over time](figures/constant_lr_loss_over_time.png)
-Validation Accuracy: 76.21%
-Training Accuracy: 98.41%
-Test Accuracy: 60.97%
-True positive: 2548
-False negative: 1912
-True negative: 4851
-False positive: 0
-Recall: 0.5713004484304933
-Precision: 1.0
-F1 score: 0.7271689497716896
+Graphs were generated plotting the training and epoch loss against epoch number.
+Training, validation, and test accuracy were calculated from their respective datasets.
+Furthermore, recall, precision, and $F_1$ score statistics were generated for the test dataset
 
-#### Variable learning rate:
+### Constant learning model
+![Training and validation loss over time](figures/constant_lr_loss_over_time.png)
+Summary statistics:
+ - Validation accuracy: 76.21%
+ - Training accuracy: 98.41%
+ - Test accuracy: 60.97%
+ - $F_1$ score: 0.7272
+   - $n$(True positive): 2548
+   - $n$(False negative): 1912
+   - $n$(True negative): 4851
+   - $n$(False positive): 0
+   - Recall: 0.5713
+   - Precision: 1.0
+
+### Variable learning rate:
 ![Training and validation loss over time (cosine lr)](figures/cosine_lr_loss_over_time.png)
-Validation Accuracy: 73.86%
-Training Accuracy: 100.00%
-Test Accuracy: 52.89%
-True positive: 2138
-False negative: 2322
-True negative: 4944
-False positive: 0
-Recall: 0.47937219730941705
-Precision: 1.0
-F1 score: 0.6480751742952411
-### Retraining based on original tests
+ - Validation accuracy: 73.86%
+ - Training accuracy: 100.00%
+ - Test accuracy: 52.89%
+ - F1 score: 0.6481
+   - $n$(True positive): 2138
+   - $n$(False negative): 2322
+   - $n$(True negative): 4944
+   - $n$(False positive): 0
+   - Recall: 0.4794
+   - Precision: 1.0
+
+### Takeaways from training
+The data suggests that both models suffered from significant overfitting, although the constant learning rate model performs better overall.
+This is seen in the steep drop in training error within the first 50 epochs, as well as the training accuracy of 100%.
+
+It also appears that the constant learning rate model performs better overall.
+While the cosine annealing learning rate introduced significantly more variability into training, this effect seems to have simply reduced stabliity instead of moving the model away from any saddle-points.
+
+Remarkably, the models have a false positive rate of $0$, indicating they are particularly well-suited to determining the non-presence of Alzheimer's characteristics.
+The overall accuracy may therefore be able to be improved by simply adjusting the decision boundary.
+
+An additional model was attempted based on these takeaways, using a constant learning rate:
+ - The model was adjusted to have a dropout rate of 0.2 instead of 0.05
+ - The number of epochs was reduced to 150
+
+Unfortunately, there was not enough time to train and evaluate this new model at the time of writing.
 
 ## References
 [1] Alzheimer's Disease Neuroimaging Initiative, "ADNI | Alzheimer's disease neuroimaging initiative," 2025. [Online] [https://adni.loni.usc.edu/](https://adni.loni.usc.edu/)
