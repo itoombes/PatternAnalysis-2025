@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.optim.lr_scheduler import CosineAnnealingLR
 import dataset
 from modules import GFNet
 import time
@@ -14,7 +15,7 @@ LOSS_OVER_TIME_SAVE = 'loss.pkl'
 VALIDATION_LOSS_SAVE = 'validation_scores.pkl'
 
 # Number of training epochs
-N_EPOCHS = 500 
+N_EPOCHS = 400 
 # Interval between evaluations
 EVAL_INTERVAL = 5
 
@@ -57,7 +58,9 @@ def train_model():
     params = [{'params': weight_decay, 'weight_decay': 0.05},
               {'params': no_weight_decay}]
 
-    optimiser = torch.optim.AdamW(params, eps=1e-8)
+    optimiser = torch.optim.AdamW(params, eps=1e-8, lr=0.01)
+    # Load into a scheduler
+    scheduler = CosineAnnealingLR(optimizer=optimiser, T_max=40, eta_min=0.0005) 
 
     # Load training and validation datasets
     validation_loader, training_loader = dataset.get_validation_and_training_dataloaders(128, 128, 0.2, seed=42)
@@ -131,6 +134,9 @@ def train_model():
                 pickle.dump(loss_over_time, open(LOSS_OVER_TIME_SAVE, 'wb'))
                 pickle.dump(validation_loss_over_time,
                             open(VALIDATION_LOSS_SAVE, 'wb'))
+        
+        # Step the learning rate
+        scheduler.step()
 
     # Save the statistics
     pickle.dump(loss_over_time, open(LOSS_OVER_TIME_SAVE, 'wb'))
