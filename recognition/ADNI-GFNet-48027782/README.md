@@ -219,8 +219,8 @@ This is seen in the steep drop in training error within the first 50 epochs, as 
 It also appears that the constant learning rate model performs better overall.
 While the cosine annealing learning rate introduced significantly more variability into training, this effect seems to have simply reduced stabliity instead of moving the model away from any saddle-points.
 
-Remarkably, the models have a false positive rate of $0$, indicating they are particularly well-suited to determining the non-presence of Alzheimer's characteristics.
-The overall accuracy may therefore be able to be improved by simply adjusting the decision boundary.
+Remarkably, the models have a false positive rate of $0$, indicating that they are particularly well-suited to determining the non-presence of Alzheimer's characteristics.
+It is also an indication that adjusting the decision boundary between the classes is a worthwhile avenue; it should be possible to improve the detection of positive cases, at the expense of creating more false negatives.
 
 An additional model was attempted based on these takeaways, using a constant learning rate:
  - The model was adjusted to have a dropout rate of 0.2 instead of 0.05
