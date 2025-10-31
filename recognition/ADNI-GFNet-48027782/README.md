@@ -195,7 +195,17 @@ Precision: 1.0
 F1 score: 0.7271689497716896
 
 #### Variable learning rate:
-
+![Training and validation loss over time (cosine lr)](figures/cosine_lr_loss_over_time.png)
+Validation Accuracy: 73.86%
+Training Accuracy: 100.00%
+Test Accuracy: 52.89%
+True positive: 2138
+False negative: 2322
+True negative: 4944
+False positive: 0
+Recall: 0.47937219730941705
+Precision: 1.0
+F1 score: 0.6480751742952411
 ### Retraining based on original tests
 
 ## References
