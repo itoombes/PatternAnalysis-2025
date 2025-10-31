@@ -64,7 +64,7 @@ def train_model():
     params = [{'params': weight_decay, 'weight_decay': 0.05},
               {'params': no_weight_decay}]
 
-    optimiser = torch.optim.AdamW(params, eps=1e-8, lr=0.01)
+    optimiser = torch.optim.AdamW(params, eps=1e-8)
     # Load into a scheduler
     if USE_SCHEDULER:
         scheduler = CosineAnnealingLR(optimizer = optimiser, T_max = 40,
@@ -269,6 +269,19 @@ def evaluate():
         test_results[test_results['Pred'] == test_results['True']])
     print(f'Test Accuracy: {(test_correct / len(test_results))*100:.2f}%')
 
+def visualise():
+    # Load the statistics
+    loss_over_time = pickle.load(open(LOSS_OVER_TIME_SAVE, 'rb'))
+    validation_loss = pickle.load(open(VALIDATION_LOSS_SAVE, 'rb'))
+
+    import matplotlib.pyplot as plt
+    plt.plot(range(0, len(loss_over_time)), loss_over_time, 'r.-', label='Training loss')
+    plt.plot(validation_loss.keys(), validation_loss.values(), 'b.-', label='Validation loss')
+    plt.title('Training and validation loss over epochs')
+    plt.xlabel('Epoch number (0-indexed)')
+    plt.ylabel('Cross-validation loss')
+    plt.show()
+
 if __name__ == "__main__":
     '''
     If no arguments, run model training
@@ -287,5 +300,4 @@ if __name__ == "__main__":
     
     if argv[1] == 'vis':
         print('Visualisation')
-        print(pickle.load(open(LOSS_OVER_TIME_SAVE, "rb")))
-        print(pickle.load(open(VALIDATION_LOSS_SAVE, 'rb')))
+        visualise()
